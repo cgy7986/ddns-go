@@ -11,8 +11,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/jeessy2/ddns-go/v6/config"
@@ -34,16 +34,16 @@ var updateFlag = flag.Bool("u", false, "Upgrade ddns-go to the latest version")
 var listen = flag.String("l", ":9876", "Listen address")
 
 // 更新频率(秒)
-var every = flag.Int("f", 300, "Sync frequency(seconds)")
+var every = flag.Int("f", 300, "Update frequency(seconds)")
 
 // 缓存次数
-var ipCacheTimes = flag.Int("cacheTimes", 5, "Interval N times compared with service providers")
+var ipCacheTimes = flag.Int("cacheTimes", 5, "Cache times")
 
 // 服务管理
 var serviceType = flag.String("s", "", "Service management (install|uninstall|restart)")
 
 // 配置文件路径
-var configFilePath = flag.String("c", util.GetConfigFilePathDefault(), "config file path")
+var configFilePath = flag.String("c", util.GetConfigFilePathDefault(), "Custom configuration file path")
 
 // Web 服务
 var noWebService = flag.Bool("noweb", false, "No web service")
@@ -52,7 +52,10 @@ var noWebService = flag.Bool("noweb", false, "No web service")
 var skipVerify = flag.Bool("skipVerify", false, "Skip certificate verification")
 
 // 自定义 DNS 服务器
-var customDNSServer = flag.String("dns", "", "Custom DNS server, example: 8.8.8.8")
+var customDNS = flag.String("dns", "", "Custom DNS server address, example: 8.8.8.8")
+
+// 重置密码
+var newPassword = flag.String("resetPassword", "", "Reset password to the one entered")
 
 //go:embed static
 var staticEmbeddedFiles embed.FS
@@ -73,23 +76,39 @@ func main() {
 		update.Self(version)
 		return
 	}
+
+	// 安卓 go/src/time/zoneinfo_android.go 固定localLoc 为 UTC
+	if runtime.GOOS == "android" {
+		util.FixTimezone()
+	}
+	// 检查监听地址
 	if _, err := net.ResolveTCPAddr("tcp", *listen); err != nil {
 		log.Fatalf("Parse listen address failed! Exception: %s", err)
 	}
+	// 设置版本号
 	os.Setenv(web.VersionEnv, version)
+	// 设置配置文件路径
 	if *configFilePath != "" {
 		absPath, _ := filepath.Abs(*configFilePath)
 		os.Setenv(util.ConfigFilePathENV, absPath)
 	}
+	// 重置密码
+	if *newPassword != "" {
+		conf, err := config.GetConfigCached()
+		if err == nil {
+			conf.ResetPassword(*newPassword)
+		} else {
+			util.Log("配置文件 %s 不存在, 可通过-c指定配置文件", *configFilePath)
+		}
+		return
+	}
+	// 设置跳过证书验证
 	if *skipVerify {
 		util.SetInsecureSkipVerify()
 	}
-	if *customDNSServer != "" {
-		if !strings.Contains(*customDNSServer, ":") {
-			util.NewDialerResolver(*customDNSServer + ":53")
-		} else {
-			util.NewDialerResolver(*customDNSServer)
-		}
+	// 设置自定义DNS
+	if *customDNS != "" {
+		util.SetDNS(*customDNS)
 	}
 	os.Setenv(util.IPCacheTimesENV, strconv.Itoa(*ipCacheTimes))
 	switch *serviceType {
@@ -123,7 +142,7 @@ func main() {
 }
 
 func run() {
-	// 兼容v5.0.0之前的配置文件
+	// 兼容之前的配置文件
 	conf, _ := config.GetConfigCached()
 	conf.CompatibleConfig()
 	// 初始化语言
@@ -141,6 +160,12 @@ func run() {
 		}()
 	}
 
+	// 初始化备用DNS
+	util.InitBackupDNS(*customDNS, conf.Lang)
+
+	// 等待网络连接
+	util.WaitInternet(dns.Addresses)
+
 	// 定时运行
 	dns.RunTimer(time.Duration(*every) * time.Second)
 }
@@ -155,14 +180,17 @@ func faviconFsFunc(writer http.ResponseWriter, request *http.Request) {
 
 func runWebServer() error {
 	// 启动静态文件服务
-	http.HandleFunc("/static/", web.BasicAuth(staticFsFunc))
-	http.HandleFunc("/favicon.ico", web.BasicAuth(faviconFsFunc))
+	http.HandleFunc("/static/", web.AuthAssert(staticFsFunc))
+	http.HandleFunc("/favicon.ico", web.AuthAssert(faviconFsFunc))
+	http.HandleFunc("/login", web.AuthAssert(web.Login))
+	http.HandleFunc("/loginFunc", web.AuthAssert(web.LoginFunc))
 
-	http.HandleFunc("/", web.BasicAuth(web.Writing))
-	http.HandleFunc("/save", web.BasicAuth(web.Save))
-	http.HandleFunc("/logs", web.BasicAuth(web.Logs))
-	http.HandleFunc("/clearLog", web.BasicAuth(web.ClearLog))
-	http.HandleFunc("/webhookTest", web.BasicAuth(web.WebhookTest))
+	http.HandleFunc("/", web.Auth(web.Writing))
+	http.HandleFunc("/save", web.Auth(web.Save))
+	http.HandleFunc("/logs", web.Auth(web.Logs))
+	http.HandleFunc("/clearLog", web.Auth(web.ClearLog))
+	http.HandleFunc("/webhookTest", web.Auth(web.WebhookTest))
+	http.HandleFunc("/logout", web.Auth(web.Logout))
 
 	util.Log("监听 %s", *listen)
 
@@ -226,8 +254,8 @@ func getService() service.Service {
 		svcConfig.Arguments = append(svcConfig.Arguments, "-skipVerify")
 	}
 
-	if *customDNSServer != "" {
-		svcConfig.Arguments = append(svcConfig.Arguments, "-dns", *customDNSServer)
+	if *customDNS != "" {
+		svcConfig.Arguments = append(svcConfig.Arguments, "-dns", *customDNS)
 	}
 
 	prg := &program{}

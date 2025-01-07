@@ -98,19 +98,8 @@ const DNS_PROVIDERS = {
     idLabel: "Key",
     secretLabel: "Secret",
     helpHtml: {
-      "en": "<a target='_blank' href='https://porkbun.com/account/api'>Create API KEY</a>",
+      "en": "<a target='_blank' href='https://developer.godaddy.com/keys'>Create API KEY</a>",
       "zh-cn": "<a target='_blank' href='https://developer.godaddy.com/keys'>创建 API KEY</a>",
-    }
-  },
-  googledomain: {
-    name: {
-      "en": "Google Domain",
-    },
-    idLabel: "Username",
-    secretLabel: "Password",
-    helpHtml: {
-      "en": "<a target='_blank' href='https://support.google.com/domains/answer/6147083?hl=en'>How to get started</a>",
-      "zh-cn": "<a target='_blank' href='https://support.google.com/domains/answer/6147083?hl=zh-Hans'>新建动态域名解析记录</a>",
     }
   },
   namecheap: {
@@ -135,6 +124,40 @@ const DNS_PROVIDERS = {
       "zh-cn": "<a target='_blank' href='https://www.namesilo.com/account/api-manager'>开启namesilo动态域名解析</a> <b>请注意namesilo的TTL最低1小时</b>",
     }
   },
+  vercel: {
+    name: {
+      "en": "Vercel",
+    },
+    idLabel: "",
+    secretLabel: "Token",
+    helpHtml: {
+      "en": "<a target='_blank' href='https://vercel.com/account/tokens'>Create Token</a>",
+      "zh-cn": "<a target='_blank' href='https://vercel.com/account/tokens'>创建令牌</a>",
+    }
+  },
+  dynadot: {
+    name: {
+      "en": "Dynadot",
+    },
+    idLabel: "",
+    secretLabel: "Password",
+    helpHtml: {
+      "en": "<a target='_blank' href='https://www.dynadot.com/community/help/question/enable-DDNS'>How to get started</a>",
+      "zh-cn": "<a target='_blank' href='https://www.dynadot.com/community/help/question/enable-DDNS'>开启Dynadot动态域名解析</a>",
+    }
+  },
+  trafficroute: {
+    name: {
+      "en": "TrafficRoute",
+      "zh-cn": "火山引擎",
+    },
+    idLabel: "AccessKey",
+    secretLabel: "SecretAccessKey",
+    helpHtml: {
+      "en": "<a target='_blank' href='https://console.volcengine.com/iam/keymanage/'>Create AccessKey</a>",
+      "zh-cn": "<a target='_blank' href='https://console.volcengine.com/iam/keymanage/'>创建火山引擎 API 密钥</a>",
+    }
+  },
 };
 
 const SVG_CODE = {
@@ -151,6 +174,8 @@ const I18N_MAP = {
     'Save': 'Save',
     'Config:': 'Config:',
     'Add': 'Add',
+    'Rename': 'Rename',
+    'RenameHelp': 'Enter a new name:',
     'Delete': 'Delete',
     'DNS Provider': 'DNS Provider',
     'Create AccessKey': 'Create AccessKey',
@@ -170,16 +195,19 @@ const I18N_MAP = {
     'By network card': 'By network card',
     'By command': 'By command',
     'domainsHelp': `
-      One domain per line, you can use colon to separate the root domain
-      (example.cn.eu.org) and the subdomain (www), fill in as: <b>www:example.cn.eu.org</b>
+      Enter one domain per line.
+      If the domain is unregistrable, manually separate it into a subdomain and a root domain by using a colon. e.g. <code>www:domain.example.com</code><br />
+
+      Support for <a target="blank" href="https://github.com/jeessy2/ddns-go/wiki/传递自定义参数">custom parameters</a> (Simplified Chinese)
     `,
     'Regular exp.': 'Regular exp.',
     'regHelp': 'You can use @1 to specify the first IPv6 address, @2 to specify the second IPv6 address... You can also use regular expressions to match the specified IPv6 address, leave it blank to disable it',
     'Others': 'Others',
     'Deny from WAN': 'Deny from WAN',
-    'NotAllowWanAccessHelp': 'Default enabled, can prohibit access to this page from the public network',
+    'NotAllowWanAccessHelp': 'Enable to deny access from the public network',
     'Username': 'Username',
-    'accountHelp': 'Please enter to protect your information security',
+    'accountHelp': 'Username/Password is required',
+    'passwordHelp': 'If you need to change the password, please enter it here',
     'Password': 'Password',
     'WebhookURLHelp': `
       <a
@@ -195,19 +223,24 @@ const I18N_MAP = {
     'Try it': 'Try it',
     'Clear': 'Clear',
     'OK': 'OK',
-    "Ipv4UrlHelp": "https://myip4.ipip.net, https://ddns.oray.com/checkip, https://ip.3322.net",
-    "Ipv6UrlHelp": "https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn",
+    "Ipv4UrlHelp": "https://api.ipify.org, https://myip.ipip.net, https://ddns.oray.com/checkip, https://ip.3322.net, https://v4.yinghualuo.cn/bejson",
+    "Ipv6UrlHelp": "https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn, https://v6.yinghualuo.cn/bejson",
     "Ipv4NetInterfaceHelp": "Get IPv4 address through network card",
     "Ipv6NetInterfaceHelp": "If you do not specify a matching regular expression, the first IPv6 address will be used by default",
     "Ipv4CmdHelp": "Get IPv4 through command, only use the first matching IPv4 address of standard output(stdout). Such as: ip -4 addr show eth1",
     "Ipv6CmdHelp": "Get IPv6 through command, only use the first matching IPv6 address of standard output(stdout). Such as: ip -6 addr show eth1",
     "NetInterfaceEmptyHelp": '<span style="color: red">No available network card found</span>',
+    "Login": 'Login',
+    "LoginInit": 'Login and configure as an administrator account',
+    "Logout": 'Logout',
   },
   'zh-cn': {
     'Logs': '日志',
     'Save': '保存',
     'Config:': '配置切换:',
     'Add': '添加',
+    'Rename': '重命名',
+    'RenameHelp': '输入新名称：',
     'Delete': '删除',
     'DNS Provider': 'DNS服务商',
     'Create AccessKey': '创建 AccessKey',
@@ -227,16 +260,19 @@ const I18N_MAP = {
     'By network card': '通过网卡获取',
     'By command': '通过命令获取',
     'domainsHelp': `
-      一行一个域名, 可使用冒号分隔根域名(example.cn.eu.org)与子域名(www), 填写为：<b>www:example.cn.eu.org</b>
-      <a target="blank" href="https://github.com/jeessy2/ddns-go/wiki/传递自定义参数">支持传递自定义参数</a>
+      每行一个域名。
+      如果域名不可注册，请使用冒号手动将其分为子域名和根域名。如 <code>www:domain.example.com</code><br />
+
+      支持<a target="blank" href="https://github.com/jeessy2/ddns-go/wiki/传递自定义参数">自定义参数</a>
     `,
     'Regular exp.': '匹配正则表达式',
     'regHelp': '可使用 @1 指定第一个IPv6地址, @2 指定第二个IPv6地址... 也可使用正则表达式匹配指定的IPv6地址, 留空则不启用',
     'Others': '其他',
     'Deny from WAN': '禁止公网访问',
-    'NotAllowWanAccessHelp': '默认启用, 可禁止从公网访问本页面',
+    'NotAllowWanAccessHelp': '启用后禁止从公网访问此页面',
     'Username': '用户名',
-    'accountHelp': '为保护你的信息安全，建议输入',
+    'accountHelp': '必须输入用户名/密码',
+    'passwordHelp': '如需修改密码，请在此处输入新密码',
     'Password': '密码',
     'WebhookURLHelp': `
       <a target="blank" href="https://github.com/jeessy2/ddns-go#webhook">点击参考官方 Webhook 说明</a>
@@ -248,8 +284,8 @@ const I18N_MAP = {
     'Try it': '模拟测试Webhook',
     'Clear': '清空',
     'OK': '确定',
-    "Ipv4UrlHelp": "https://myip4.ipip.net, https://ddns.oray.com/checkip, https://ip.3322.net",
-    "Ipv6UrlHelp": "https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn",
+    "Ipv4UrlHelp": "https://myip.ipip.net, https://ddns.oray.com/checkip, https://ip.3322.net, https://v4.yinghualuo.cn/bejson",
+    "Ipv6UrlHelp": "https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn, https://v6.yinghualuo.cn/bejson",
     "Ipv4NetInterfaceHelp": "通过网卡获取IPv4",
     "Ipv6NetInterfaceHelp": "如不指定匹配正则表达式，将默认使用第一个 IPv6 地址",
     "Ipv4CmdHelp": `
@@ -261,5 +297,8 @@ const I18N_MAP = {
       <a target="blank" href="https://github.com/jeessy2/ddns-go/wiki/通过命令获取IP参考">点击参考更多</a>
     `,
     "NetInterfaceEmptyHelp": '<span style="color: red">没有找到可用的网卡</span>',
+    "Login": '登录',
+    "LoginInit": '登录并配置为管理员账号',
+    "Logout": '注销',
   }
 };

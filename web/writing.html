@@ -42,6 +42,9 @@
             id="themeButton"
           ></span>
           <span class="badge badge-secondary">{{.Version}}</span>
+          <a href="./logout" class="action-button logout-button" data-i18n="Logout">
+            Logout
+          </a>
         </div>
       </div>
     </header>
@@ -77,15 +80,21 @@
                 <button
                   data-i18n="Add"
                   class="btn btn-primary btn-sm"
-                  style="margin: 0 5px"
                   id="addBtn"
                 >
                   Add
                 </button>
                 <button
+                  data-i18n="Rename"
+                  class="btn btn-primary btn-sm"
+                  style="margin: 0 5px"
+                  id="renameBtn"
+                >
+                  Rename
+                </button>
+                <button
                   data-i18n="Delete"
                   class="btn btn-primary btn-sm"
-                  style="margin: 0 0 0 5px"
                   id="delBtn"
                 >
                   Delete
@@ -96,7 +105,7 @@
 
           <form id="formDnsConf">
             <div class="portlet">
-              <h5 
+              <h5
                 data-i18n="DNS Provider"
                 class="portlet__head"
                 id="dnsProvider"
@@ -474,7 +483,7 @@
                       id="Ipv6Reg"
                       aria-describedby="Ipv6RegHelp"
                     />
-                    <small 
+                    <small
                       data-i18n_html="regHelp"
                       id="Ipv6RegHelp"
                       class="form-text text-muted"
@@ -507,7 +516,7 @@
 
           <form id="formGlobal">
             <div class="portlet">
-              <h5 
+              <h5
                 data-i18n="Others"
                 class="portlet__head"
               >Others</h5>
@@ -555,7 +564,7 @@
                     />
                     <small
                       data-i18n_html="accountHelp"
-                      id="UsernameHelp" 
+                      id="UsernameHelp"
                       class="form-text text-muted"
                     ></small>
                   </div>
@@ -574,12 +583,11 @@
                       type="password"
                       name="Password"
                       id="Password"
-                      value="{{.Password}}"
                       autocomplete="new-password"
                       aria-describedby="passwordHelp"
                     />
                     <small
-                      data-i18n_html="accountHelp"
+                      data-i18n_html="passwordHelp"
                       id="passwordHelp"
                       class="form-text text-muted"
                     ></small>
@@ -719,6 +727,7 @@
       WebhookHeaders: document.getElementById("WebhookHeaders").value,
     };
     const defaultDnsConf = {
+      Name: "",
       DnsID: "",
       DnsName: "alidns",
       DnsSecret: "",
@@ -728,8 +737,8 @@
       Ipv4GetType: "url",
       Ipv4NetInterface: "",
       Ipv4Url: i18n({
-        "en": "https://api.ipify.org, https://ddns.oray.com/checkip, https://ip.3322.net, https://4.ipw.cn",
-        "zh-cn": "https://myip4.ipip.net, https://ddns.oray.com/checkip, https://ip.3322.net, https://4.ipw.cn",
+        "en": "https://api.ipify.org, https://ddns.oray.com/checkip, https://ip.3322.net, https://4.ipw.cn, https://v4.yinghualuo.cn/bejson",
+        "zh-cn": "https://myip.ipip.net, https://ddns.oray.com/checkip, https://ip.3322.net, https://4.ipw.cn, https://v4.yinghualuo.cn/bejson",
       }),
       Ipv6Cmd: "",
       Ipv6Domains: "",
@@ -738,13 +747,13 @@
       Ipv6NetInterface: "",
       Ipv6Reg: "",
       Ipv6Url: i18n({
-        "en": "https://api64.ipify.org, https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn",
-        "zh-cn": "https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn",
+        "en": "https://api64.ipify.org, https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn, https://v6.yinghualuo.cn/bejson",
+        "zh-cn": "https://speed.neu6.edu.cn/getIP.php, https://v6.ident.me, https://6.ipw.cn, https://v6.yinghualuo.cn/bejson",
       }),
       TTL: "",
     };
   </script>
-  
+
   <!-- 表单相关 -->
   <script>
     // 生成DNS选择项
@@ -780,7 +789,8 @@
         document.getElementById("dnsIdLabel").innerHTML = dnsInfo.idLabel;
         document.getElementById("dnsSecretLabel").innerHTML = dnsInfo.secretLabel;
         document.getElementById("dnsHelp").innerHTML = i18n(dnsInfo.helpHtml);
-        document.getElementById("index_" + configIndex).innerHTML = `${configIndex + 1} - ${e.target.value}`;
+        document.getElementById(`index_${configIndex}`).textContent = getConfName(configIndex, e.target.value);
+
         dnsConf[configIndex].DnsName = e.target.value;
       });
     });
@@ -844,10 +854,17 @@
 
   <!-- 配置项 -->
   <script>
+    // 不需要填充到表单中的字段
+    const SKIPPED_NAMES = ["Name"];
+
     // 把dnsConf中的值填充到表单中
     function showConf(idx) {
       const conf = dnsConf[idx] ?? {};
       for (const name in conf) {
+        if (SKIPPED_NAMES.includes(name)) {
+          continue;
+        }
+
         const $e = document.querySelector(`[name=${name}]`);
         // 判断对应input的类型
         switch ($e.getAttribute("type")) {
@@ -860,7 +877,7 @@
           default:
             //特殊处理select类型，要保证option存在，否则取第一个option
             if ($e.tagName === "SELECT" &&
-              $e.querySelector(`option[value="${conf[name]}]`) === null) {
+              $e.querySelector(`option[value="${conf[name]}"]`) === null) {
               $e.value = $e.querySelector("option")?.value;
               conf[name] = $e.value||"";
             }
@@ -883,15 +900,12 @@
         alert("error: " + e.toString());
         return;
       }
-      const $select = document.getElementById("index");
-      $select.innerHTML = "";
+
+      // Reload all configs in dnsConf into index
+      const $index = document.getElementById("index");
+      $index.innerHTML = "";
       for (let i = 0; i < dnsConf.length; i++) {
-        const $option = html2Element(`
-          <option id="index_${i}" value="${i}">
-            ${i + 1} - ${dnsConf[i].DnsName}
-          </option>
-        `);
-        $select.appendChild($option);
+        appendConfigToIndex(i);
       }
       // 负数表示倒数第几个
       if (configIndex < 0) {
@@ -899,8 +913,24 @@
       } else {
         configIndex = Math.min(configIndex, dnsConf.length - 1);
       }
-      $select.value = configIndex;
+      $index.value = configIndex;
       showConf(configIndex);
+    }
+
+    // 拼接新的配置项到下拉菜单
+    function appendConfigToIndex(idx) {
+      const $index = document.getElementById('index');
+
+      const $option = html2Element(`
+        <option id="index_${idx}" value="${idx}">
+          ${getConfName(idx)}
+        </option>`);
+      $index.append($option);
+    }
+
+    // 获取配置名称或生成默认名称
+    function getConfName(idx, _default = dnsConf[idx].DnsName) {
+      return dnsConf[idx].Name || `${idx + 1} - ${_default}`;
     }
 
     // 新增配置按钮被点击
@@ -908,16 +938,23 @@
       e.preventDefault();
       configIndex = dnsConf.length;
       dnsConf[configIndex] = {...defaultDnsConf};
+
       // 创建新的option
-      const $index = document.getElementById("index");
-      const $option = html2Element(`
-        <option id="index_${configIndex}" value="${configIndex}">
-          ${configIndex + 1} - ${dnsConf[configIndex].DnsName}
-        </option>
-      `);
-      $index.appendChild($option);
-      $index.value = configIndex;
+      appendConfigToIndex(configIndex);
+
+      document.getElementById("index").value = configIndex;
       showConf(configIndex);
+    });
+
+    // 重命名配置按钮被点击
+    document.getElementById("renameBtn").addEventListener('click', e => {
+      e.preventDefault();
+
+      const newName = prompt(i18n("RenameHelp"));
+      if (newName) {
+        dnsConf[configIndex].Name = newName;
+        document.getElementById(`index_${configIndex}`).textContent = newName;
+      }
     });
 
     // 删除配置按钮被点击
@@ -1096,30 +1133,7 @@
   </script>
 
   <!-- 主题色相关的函数和初始化 -->
-  <script>
-    function toggleTheme(write = false) {
-      const docEle = document.documentElement;
-      if (docEle.getAttribute("data-theme") === "dark") {
-        docEle.removeAttribute("data-theme");
-        write && localStorage.setItem("theme", "light");
-      } else {
-        docEle.setAttribute("data-theme", "dark");
-        write && localStorage.setItem("theme", "dark");
-      }
-    }
-
-    const theme = localStorage.getItem("theme") ??
-      (window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light");
-        
-    if (theme === "dark") {
-      toggleTheme();
-    }
-
-    // 主题切换
-    document.getElementById("themeButton").addEventListener('click', () => toggleTheme(true));
-  </script>
+  <script src="./static/theme.js"></script>
 
   <!-- 测试相关 -->
   <script>

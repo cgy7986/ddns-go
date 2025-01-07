@@ -65,12 +65,12 @@ func (nc *NameCheap) addUpdateDomainRecords(recordType string) {
 	}
 
 	for _, domain := range domains {
-		nc.modify(domain, recordType, ipAddr)
+		nc.modify(domain, ipAddr)
 	}
 }
 
 // 修改
-func (nc *NameCheap) modify(domain *config.Domain, recordType string, ipAddr string) {
+func (nc *NameCheap) modify(domain *config.Domain, ipAddr string) {
 	var result NameCheapResp
 	err := nc.request(&result, ipAddr, domain)
 
@@ -92,11 +92,12 @@ func (nc *NameCheap) modify(domain *config.Domain, recordType string, ipAddr str
 
 // request 统一请求接口
 func (nc *NameCheap) request(result *NameCheapResp, ipAddr string, domain *config.Domain) (err error) {
-	var url string = nameCheapEndpoint
-	url = strings.ReplaceAll(url, "#{host}", domain.GetSubDomain())
-	url = strings.ReplaceAll(url, "#{domain}", domain.DomainName)
-	url = strings.ReplaceAll(url, "#{password}", nc.DNS.Secret)
-	url = strings.ReplaceAll(url, "#{ip}", ipAddr)
+	url := strings.NewReplacer(
+		"#{host}", domain.GetSubDomain(),
+		"#{domain}", domain.DomainName,
+		"#{password}", nc.DNS.Secret,
+		"#{ip}", ipAddr,
+	).Replace(nameCheapEndpoint)
 
 	req, err := http.NewRequest(
 		http.MethodGet,

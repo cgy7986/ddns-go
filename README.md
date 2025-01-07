@@ -18,7 +18,7 @@
 ## 特性
 
 - 支持Mac、Windows、Linux系统，支持ARM、x86架构
-- 支持的域名服务商 `阿里云` `腾讯云` `Dnspod` `Cloudflare` `华为云` `Callback` `百度云` `Porkbun` `GoDaddy` `Google Domain` `Namecheap` `NameSilo`
+- 支持的域名服务商 `阿里云` `腾讯云` `Dnspod` `Cloudflare` `华为云` `Callback` `百度云` `Porkbun` `GoDaddy` `Namecheap` `NameSilo` `Dynadot`
 - 支持接口/网卡/[命令](https://github.com/jeessy2/ddns-go/wiki/通过命令获取IP参考)获取IP
 - 支持以服务的方式运行
 - 默认间隔5分钟同步一次
@@ -29,7 +29,7 @@
 - 网页中方便快速查看最近50条日志
 - 支持Webhook通知
 - 支持TTL
-- 支持部分DNS服务商[传递自定义参数](https://github.com/jeessy2/ddns-go/wiki/传递自定义参数)，实现地域解析等功能
+- 支持部分DNS服务商[传递自定义参数](https://github.com/jeessy2/ddns-go/wiki/传递自定义参数)，实现地域解析/多IP等功能
 
 > [!NOTE]
 > 建议在启用公网访问时，使用 Nginx 等反向代理软件启用 HTTPS 访问，以保证安全性。[FAQ](https://github.com/jeessy2/ddns-go/wiki/FAQ)
@@ -43,7 +43,7 @@
 - [可选] 服务卸载
   - Mac/Linux: `sudo ./ddns-go -s uninstall`
   - Win(以管理员打开cmd): `.\ddns-go.exe -s uninstall`
-- [可选] 支持安装带参数 
+- [可选] 支持安装带参数
   - `-l` 监听地址
   - `-f` 同步间隔时间(秒)
   - `-cacheTimes` 间隔N次与服务商比对
@@ -51,6 +51,7 @@
   - `-noweb` 不启动web服务
   - `-skipVerify` 跳过证书验证
   - `-dns` 自定义 DNS 服务器
+  - `-resetPassword` 重置密码
 - [可选] 参考示例
   - 10分钟同步一次, 并指定了配置文件地址
     ```bash
@@ -59,6 +60,11 @@
   - 每 10 秒检查一次本地 IP 变化, 每 30 分钟对比一下 IP 变化, 实现 IP 变化即时触发更新且不会被服务商限流, 如果使用接口获取IP, 需要注意接口限流
     ```bash
     ./ddns-go -s install -f 10 -cacheTimes 180
+    ```
+  - 重置密码
+    ```bash
+    ./ddns-go -resetPassword 123456
+    ./ddns-go -resetPassword 123456 -c /Users/name/.ddns_go_config.yaml
     ```
 - [可选] 使用 [Homebrew](https://brew.sh) 安装 [ddns-go](https://formulae.brew.sh/formula/ddns-go)：
 
@@ -92,6 +98,13 @@
 
   ```bash
   docker run -d --name ddns-go --restart=always -p 9876:9876 -v /opt/ddns-go:/root jeessy/ddns-go
+  ```
+
+- [可选] 重置密码
+
+  ```bash
+  docker exec ddns-go ./ddns-go -resetPassword 123456
+  docker restart ddns-go
   ```
 
 ## 使用IPv6

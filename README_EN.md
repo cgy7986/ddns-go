@@ -16,7 +16,7 @@ Automatically obtain your public IPv4 or IPv6 address and resolve it to the corr
 ## Features
 
 - Support Mac, Windows, Linux system, support ARM, x86 architecture
-- Support domain service providers `Aliyun` `Tencent` `Dnspod` `Cloudflare` `Huawei` `Callback` `Baidu` `Porkbun` `GoDaddy` `Google Domain` `Namecheap` `NameSilo`
+- Support domain service providers `Aliyun` `Tencent` `Dnspod` `Cloudflare` `Huawei` `Callback` `Baidu` `Porkbun` `GoDaddy` `Namecheap` `NameSilo` `Dynadot`
 - Support interface / netcard / command to get IP
 - Support running as a service
 - Default interval is 5 minutes
@@ -27,6 +27,7 @@ Automatically obtain your public IPv4 or IPv6 address and resolve it to the corr
 - In the web page, you can quickly view the latest 50 logs
 - Support Webhook notification
 - Support TTL
+- Support for some domain service providers to pass [custom parameters](https://github.com/jeessy2/ddns-go/wiki/传递自定义参数) to achieve multi-IP and other functions
 
 > [!NOTE]
 > If you enable public network access, it is recommended to use Nginx and other reverse proxy software to enable HTTPS access to ensure security.
@@ -48,6 +49,7 @@ Automatically obtain your public IPv4 or IPv6 address and resolve it to the corr
   - `-noweb` does not start web service
   - `-skipVerify` skip certificate verification
   - `-dns` custom DNS server
+  - `-resetPassword` reset password
 - [Optional] Examples
   - 10 minutes to synchronize once, and the configuration file address is specified
     ```bash
@@ -56,6 +58,10 @@ Automatically obtain your public IPv4 or IPv6 address and resolve it to the corr
   - Every 10 seconds to check the local IP changes, every 30 minutes to compare the IP changes, to achieve IP changes immediately trigger updates and will not be limited by the service providers, if the use of api to obtain IP, need to pay attention to the api side of the flow limit
     ```bash
     ./ddns-go -s install -f 10 -cacheTimes 180
+    ```
+  - reset password
+    ```bash
+    ./ddns-go -resetPassword 123456
     ```
 - [Optional] You can use [Homebrew](https://brew.sh) to install [ddns-go](https://formulae.brew.sh/formula/ddns-go)
 
@@ -89,6 +95,13 @@ Automatically obtain your public IPv4 or IPv6 address and resolve it to the corr
 
   ```bash
   docker run -d --name ddns-go --restart=always -p 9876:9876 -v /opt/ddns-go:/root jeessy/ddns-go
+  ```
+
+- [Optional] Reset password
+
+  ```bash
+  docker exec ddns-go ./ddns-go -resetPassword 123456
+  docker restart ddns-go
   ```
 
 ## Webhook
